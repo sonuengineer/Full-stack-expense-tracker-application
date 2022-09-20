@@ -1,0 +1,141 @@
+<html>
+    <head>
+        <title>Expense Tracker App</title>
+    </head>
+   
+    <body>
+        <header>
+            <h1 class="title">Expense Tracker App</h1>
+        <header>
+    
+        <form onsubmit="addExpense(event)" id="userform" method="POST" action="/">
+            <label for="Expenses"> Expenses </label>
+            <input type="text" id="Expenses" name="Expenses">
+            <label for="Description"> Description </label>
+            <input type="text" id = "Description" name="Description">
+            <label for="Category"> Category </label>
+            <select name="Category" id="Category">
+                <option value="chooseOne">Choose one...</option>
+                <option value="movie">movie</option>
+                <option value="fuel">fuel</option>
+                <option value="electricity">electricity</option>
+                <option value="popcorn">Traveling</option>
+            </select>
+            <input type="hidden" id="id" name="id">
+            <input class="btn" type="submit" id="button" value="submit">
+        </form>
+
+        <ul id="userlist">
+
+        </ul>
+    </body>
+</html>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.0.0-alpha.1/axios.min.js"> </script>
+
+<script>
+
+    // to add a new expense
+    async function addExpense(event)
+    {
+        event.preventDefault();
+
+        let expenses = event.target.Expenses.value;
+        let description = event.target.Description.value;
+        let category = event.target.Category.value;
+
+        let obj = {
+            expense: expenses,
+            description: description,
+            category: category
+        }
+
+            try {
+                await axios.post("http://localhost:3000/addExpense",obj)
+                showExpense(obj);
+            }
+            catch(err)
+            {
+                console.log(err);
+            }
+    }
+
+    // to add child list and show it on html page
+    function showExpense(obj)
+    {
+        document.getElementById('Expenses').value = '';
+        document.getElementById('Category').value = '';
+        document.getElementById('Description').value = '';
+
+        console.log(obj.expense);
+
+        const parent = document.getElementById("userlist");
+
+        const child = `<li id='${obj.id}'> Expenses are = ${obj.expense}, description is = ${obj.description} and category is = ${obj.category} 
+        <button onclick = "deleteExpense('${obj.id}')"> Delete </button> 
+        <button onclick = "editExpense('${obj.id}')"> Edit User </button> </li>` 
+
+        parent.innerHTML = parent.innerHTML + child;
+    }
+
+    // to delete expense from database expense
+    async function deleteExpense(userId)
+    {
+        //console.log(userId);
+            try{
+                await axios.get(`http://localhost:3000/deleteExpense/${userId}`)
+                removeExpense(userId);
+            }
+            catch (err) {
+                console.log(err);
+            }
+    }
+
+    // to remove expense from html
+    function removeExpense(userId)
+    {
+        const parent = document.getElementById("userlist");
+        const child = document.getElementById(userId);
+
+        if(child)
+        {
+            parent.removeChild(child);
+        }
+    }
+
+    //to edit expense
+    async function editExpense(userId)
+    {
+            try{
+                const res = await axios.get(`http://localhost:3000/editExpense/${userId}`)
+            
+                document.getElementById('Expenses').value = res.data.expense;
+                document.getElementById('Description').value = res.data.description;
+                document.getElementById('Category').value = res.data.category;
+
+                deleteExpense(userId);
+            }
+            catch(err)
+            {
+                console.log(err);
+            }
+    }
+    
+    //to load content when refresh page
+    window.addEventListener('DOMContentLoaded', async () => {
+
+            try{
+                const res = await axios.get("http://localhost:3000/")
+                
+                for(let i =0; i< res.data.length; i++)
+                {
+                    showExpense(res.data[i]);
+                }
+        }
+        catch(err)
+        {
+            console.log(err);
+        }
+    });
+
+</script>
